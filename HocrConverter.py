@@ -1,7 +1,8 @@
 from reportlab.pdfgen.canvas import Canvas
 from reportlab.lib.units import inch
 from xml.etree.ElementTree import ElementTree
-import Image, re, sys
+from PIL import Image
+import re, sys
 
 class HocrConverter():
   """
@@ -94,7 +95,7 @@ class HocrConverter():
     """
     if self.hocr is None:
       # warn that no text will be embedded in the output PDF
-      print "Warning: No hOCR file specified. PDF will be image-only."
+      print("Warning: No hOCR file specified. PDF will be image-only.")
       
     im = Image.open(imageFileName)
     imwidthpx, imheightpx = im.size
@@ -127,7 +128,7 @@ class HocrConverter():
     if width is None:
       # no dpi info with the image, and no help from the hOCR file either
       # this will probably end up looking awful, so issue a warning
-      print "Warning: DPI unavailable for image %s. Assuming 96 DPI."%(imageFileName)
+      print(f'Warning: DPI unavailable for image {imageFileName}. Assuming 96 DPI.')
       width = float(im.size[0])/96
       height = float(im.size[1])/96
       
@@ -138,8 +139,8 @@ class HocrConverter():
     pdf.drawInlineImage(im, 0, 0, width=width*inch, height=height*inch)
     
     if self.hocr is not None:
-      for line in self.hocr.findall(".//%sspan"%(self.xmlns)):
-        if line.attrib['class'] == 'ocr_line':
+      for line in self.hocr.findall(f'.//{self.xmlns}span'):
+        if line.attrib['class'] == 'ocrx_word':
           coords = self.element_coordinates(line)
           text = pdf.beginText()
           text.setFont(fontname, fontsize)
@@ -153,6 +154,7 @@ class HocrConverter():
           
           # write the text to the page
           text.textLine(line.text.rstrip())
+          text.textLine()
           pdf.drawText(text)
     
     # finish up the page and save it
@@ -169,7 +171,7 @@ class HocrConverter():
 
 if __name__ == "__main__":
   if len(sys.argv) < 4:
-    print 'Usage: python HocrConverter.py inputHocrFile inputImageFile outputPdfFile'
+    print('Usage: python HocrConverter.py inputHocrFile inputImageFile outputPdfFile')
     sys.exit(1)
   hocr = HocrConverter(sys.argv[1])
   hocr.to_pdf(sys.argv[2], sys.argv[3])
